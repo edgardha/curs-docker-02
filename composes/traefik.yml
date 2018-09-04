@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  traefik:
+    image: traefik
+    command: --api --docker --docker.swarmmode --docker.domain=edgard.lan
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    networks:
+      - "traefik"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      mode: global
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  traefik:
+    external: true

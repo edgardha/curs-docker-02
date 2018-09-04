@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  logstash:
+    image: 
+  logspout:
+    image: gliderlabs/logspout
+    network:
+      - "logs"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      ROUTE_URIS: 'logstash://logstash:5000'
+    depends_on:
+      - logstash
+    deploy:
+      mode: global
+       
+  elasticsearch:
+    image: library/elasticsearch:5.6.11-alpine
+    networks:
+      - "logs"
+    volumes:
+      - /srv/docker/volumes/elasticsearch:/usr/share/elasticsearch/data
+        #command: ["-Des.node.name=\"TestNode\""]
+
+networks:
+  logs:

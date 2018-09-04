@@ -1,0 +1,62 @@
+version: '3.3'
+
+services:
+  telegraf:
+    image: library/telegraf:1.7.4
+    depends_on:
+      - influxdb
+    deploy:
+      mode: global
+    networks:
+      - host
+    volumes:
+      - /srv/docker/volumes/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /sys:/rootfs/sys:ro
+      - /proc:/rootfs/proc:ro
+      - /run:/rootfs/run:ro
+      - /etc:/rootfs/etc:ro
+    environment:
+      - HOST_PROC=/rootfs/proc
+      - HOST_SYS=/rootfs/sys
+      - HOST_ETC=/rootfs/etc
+      - HOST_RUN=/rootfs/run
+      
+  influxdb:
+    image: library/influxdb:1.6.2-alpine
+    environment:
+      - INFLUXDB_DB=telegraf
+      - INFLUXDB_USER=telegraf
+      - INFLUXDB_USER_PASSWORD=telegraf
+    ports:
+      - 8086:8086
+    networks:
+      - "influxdb"
+    volumes:
+      - /srv/docker/volumes/influxdb:/var/lib/influxdb
+    
+        
+  grafana:
+    image: grafana/grafana:5.2.3
+    environment:
+      - "GF_SECURITY_ADMIN_USER=admin"
+      - "GF_SECURITY_ADMIN_PASSWORD=admin"
+    deploy:
+      labels:
+        traefik.port: 3000
+        traefik.docker.network: 'traefik'
+        traefik.frontend.rule: 'Host:grafana.zitrolab.lan'
+      replicas: 1
+    volumes:
+      - /srv/docker/volumes/grafana:/var/lib/grafana
+    networks:
+      - "traefik"
+      - "influxdb"
+      
+networks:
+  influxdb:
+  traefik:
+    external: true
+  host:
+    external: true
+
