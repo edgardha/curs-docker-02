@@ -2,11 +2,21 @@ version: '3.3'
 
 services:
   logstash:
-    image: 
+    image: library/logstash:5.6.11-alpine
+    networks:
+      - logs
+    volumes:
+      - /srv/docker/volumes/logstash:/config-dir
+    command: -f /config-dir/logstash.conf
+    depends_on:
+      - elasticsearch
+    deploy:
+      replicas: 1
+
   logspout:
-    image: gliderlabs/logspout
-    network:
-      - "logs"
+    image: edgardha/logspout-to-logstash
+    networks:
+      - logs
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -23,6 +33,22 @@ services:
     volumes:
       - /srv/docker/volumes/elasticsearch:/usr/share/elasticsearch/data
         #command: ["-Des.node.name=\"TestNode\""]
+  kibana:
+    image: library/kibana:5.6.11
+    networks:
+      - logs
+      - traefik
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_URL: 'http://elasticsearch:9200'
+    deploy:
+      labels:
+        traefik.docker.network: 'traefik'
+        traefik.port: 5601
+        traefik.frontend.rule: 'Host:kibana.zitrolab.lan'
 
 networks:
   logs:
+  traefik:
+    external: true
