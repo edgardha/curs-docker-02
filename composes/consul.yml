@@ -1,0 +1,15 @@
+version: '3.3'
+
+services:
+  consul:
+    image: consul
+    volumes:
+            - /srv/docker/volumes/consul/:/consul/data
+    networks:
+      - consul
+    ports:
+      - 8500:8500
+
+networks:
+  consul:
+    external: true
